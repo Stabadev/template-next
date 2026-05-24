@@ -1,20 +1,24 @@
 # Template Next
 
-Socle generique Next.js reutilisable pour demarrer une application auto-hebergee avec un espace d'administration simple.
+Socle reutilisable pour demarrer de petites applications Next.js auto-hebergees avec un espace d'administration simple, une base PostgreSQL et un deploiement Docker Compose.
 
-Ce socle contient :
+## Stack
 
-- une page publique `/`
-- une page admin protegee `/admin`
-- une page de connexion `/admin/login`
-- une auth admin simple par cookie httpOnly signe
-- Prisma avec PostgreSQL
-- Docker et Docker Compose avec bind mounts explicites
-- un emplacement persistant pour les futurs uploads
+- Next.js avec App Router
+- TypeScript
+- authentification admin simple par cookie httpOnly signe
+- Prisma
+- PostgreSQL
+- Docker Compose
+- stockage persistant local prepare via `data/uploads`
+
+Le template fournit une page publique `/`, une page de connexion `/admin/login` et une page admin protegee `/admin`.
+
+Le dossier `data/uploads` est monte de maniere persistante pour de futurs fichiers. Il n'existe pas encore de fonctionnalite applicative d'upload ni de route d'upload dans ce socle.
 
 ## Variables d'environnement
 
-Copier l'exemple :
+Copier le fichier d'exemple :
 
 ```bash
 cp .env.example .env
@@ -22,28 +26,31 @@ cp .env.example .env
 
 Variables principales :
 
-- `DATABASE_URL` : URL PostgreSQL utilisee par Prisma hors Docker, par exemple avec un PostgreSQL local
 - `POSTGRES_USER` : utilisateur PostgreSQL
 - `POSTGRES_PASSWORD` : mot de passe PostgreSQL
 - `POSTGRES_DB` : base PostgreSQL
+- `DATABASE_URL` : URL PostgreSQL utilisee par Prisma hors Docker
 - `ADMIN_PASSWORD_HASH` : hash bcrypt du mot de passe admin
 - `SESSION_SECRET` : secret long et aleatoire pour signer le cookie de session
-- `UPLOAD_DIR` : dossier des fichiers uploades, par defaut `/data/uploads` dans Docker
+- `UPLOAD_DIR` : emplacement des fichiers persistants, `/data/uploads` dans Docker
+- `APP_PORT` : port expose sur l'hote pour acceder a l'application
 
-Generer le hash bcrypt du mot de passe admin :
+Generer un hash bcrypt pour le mot de passe admin :
 
 ```bash
 npm install
 npm run password:hash -- "votre-mot-de-passe"
 ```
 
-Copier ensuite la valeur affichee dans `ADMIN_PASSWORD_HASH`.
+### Important : hash bcrypt avec Docker Compose
 
-Dans `.env`, gardez le hash entre apostrophes simples pour eviter que Docker Compose interprete les `$` du hash bcrypt :
+Les hash bcrypt contiennent des caracteres `$`. Dans `.env`, avec Docker Compose, le hash doit etre entoure de quotes simples :
 
 ```bash
 ADMIN_PASSWORD_HASH='$2a$12$...'
 ```
+
+Ne mettez pas de backslash avant les `$`.
 
 Generer un secret de session :
 
@@ -51,91 +58,95 @@ Generer un secret de session :
 openssl rand -base64 32
 ```
 
-## Installation locale
+## Demarrage local avec Docker
 
-Installer les dependances :
-
-```bash
-npm install
-```
-
-Si vous avez un PostgreSQL local expose sur l'hote, renseigner `DATABASE_URL`, puis appliquer les migrations :
+1. Copier la configuration :
 
 ```bash
-npm run prisma:deploy
+cp .env.example .env
 ```
 
-Si vous utilisez PostgreSQL via Docker Compose, appliquez les migrations depuis le conteneur app, car la base n'est pas exposee sur l'hote :
+2. Dans `.env`, choisir un `APP_PORT` libre, par exemple :
 
-```bash
-mkdir -p data/postgres data/uploads
-docker compose up -d db
-docker compose run --rm app npx prisma migrate deploy
+```dotenv
+APP_PORT=3013
 ```
 
-Lancer Next.js en developpement :
+Verifier que ce port n'est pas deja utilise par une autre application ou un autre conteneur.
 
-```bash
-npm run dev
-```
-
-L'application est disponible sur :
-
-```text
-http://localhost:3000
-```
-
-## Commandes Prisma
-
-Generer le client Prisma :
-
-```bash
-npm run prisma:generate
-```
-
-Creer une migration en developpement apres modification du schema :
-
-```bash
-npm run prisma:migrate
-```
-
-Appliquer les migrations existantes :
-
-```bash
-npm run prisma:deploy
-```
-
-## Lancement avec Docker
-
-Creer les dossiers persistants :
+3. Creer les dossiers persistants :
 
 ```bash
 mkdir -p data/postgres data/uploads
 ```
 
-Construire et lancer les services :
+4. Construire et demarrer les services :
 
 ```bash
-docker compose up --build
+docker compose up -d --build
 ```
 
-Appliquer les migrations dans le conteneur app :
+5. Appliquer les migrations existantes dans le conteneur :
 
 ```bash
 docker compose exec app npx prisma migrate deploy
 ```
 
-L'application Docker est exposee localement sur :
+6. Ouvrir l'application :
 
 ```text
-http://127.0.0.1:3013
+http://localhost:<APP_PORT>
 ```
 
-PostgreSQL n'est pas expose sur l'hote par defaut. L'app le joint uniquement dans le reseau Docker via `db:5432`.
+Par exemple, avec `APP_PORT=3013` :
+
+```text
+http://localhost:3013
+```
+
+## Ports Docker
+
+L'application Next.js ecoute sur le port interne `3000` dans son conteneur.
+
+Docker Compose publie ce port sur le port hote defini par `APP_PORT` :
+
+```text
+127.0.0.1:<APP_PORT> -> app:3000
+```
+
+Il n'est donc pas necessaire de changer le port interne `3000` pour executer plusieurs applications : il faut attribuer un `APP_PORT` distinct a chaque instance.
+
+PostgreSQL reste accessible uniquement dans le reseau Docker via `db:5432` et n'est pas expose sur l'hote par defaut.
+
+## Commandes utiles
+
+Verifier l'etat des services :
+
+```bash
+docker compose ps
+```
+
+Afficher les derniers logs de l'application :
+
+```bash
+docker compose logs app --tail=80
+```
+
+Appliquer les migrations Prisma existantes :
+
+```bash
+docker compose exec app npx prisma migrate deploy
+```
+
+Arreter et supprimer les conteneurs :
+
+```bash
+docker compose down
+```
 
 ## Stockage persistant
 
-Les donnees persistantes sont stockees dans des dossiers explicites du projet :
+Les donnees persistantes sont conservees dans des dossiers explicites du projet :
 
 ```text
 ./data/postgres
@@ -144,13 +155,13 @@ Les donnees persistantes sont stockees dans des dossiers explicites du projet :
 
 `./data/postgres` contient les donnees PostgreSQL.
 
-`./data/uploads` est l'emplacement persistant prevu pour les fichiers stockes par l'application. Le socle ne fournit pas encore de route d'upload.
+`./data/uploads` est un volume local pret pour de futurs fichiers applicatifs. Le template ne fournit pas encore l'implementation d'un upload.
 
-Le dossier `./data/` est ignore par Git et ne doit pas etre commite. Cette approche evite les volumes Docker anonymes ou nommes caches.
+Le dossier `./data/` est ignore par Git et ne doit pas etre commite.
 
 ## Deploiement VPS
 
-Structure cible :
+Structure type sur le serveur :
 
 ```text
 /opt/apps/template-next/
@@ -161,16 +172,24 @@ Structure cible :
 │   └── uploads/
 ```
 
-Sur VPS, Caddy pourra servir de reverse proxy HTTPS vers le service app expose en interne. Le compose actuel publie l'app sur `127.0.0.1:${APP_PORT:-3013}`, ce qui convient a un proxy local sur la machine.
+Principes de deploiement :
 
-La base PostgreSQL reste uniquement accessible dans le reseau Docker, via `db:5432`. Elle n'a pas de mapping de port hote.
+- placer le projet dans `/opt/apps/template-next`
+- conserver le fichier `.env` uniquement sur le serveur avec des secrets forts
+- attribuer un `APP_PORT` dedie a cette application
+- creer `data/postgres` et `data/uploads` pour la persistance
+- lancer les services avec `docker compose up -d --build`
+- appliquer les migrations avec `docker compose exec app npx prisma migrate deploy`
 
-Avant de deployer :
+Le compose publie l'application sur `127.0.0.1:<APP_PORT>`, ce qui permet a Caddy installe sur l'hote de servir de reverse proxy HTTPS :
 
-- renseigner `.env` avec des secrets forts
-- creer `data/postgres` et `data/uploads`
-- lancer `docker compose up -d --build`
-- appliquer `docker compose exec app npx prisma migrate deploy`
+```caddyfile
+app.example.com {
+    reverse_proxy 127.0.0.1:<APP_PORT>
+}
+```
+
+Les donnees PostgreSQL et le volume prepare pour les fichiers restent persistants respectivement dans `data/postgres` et `data/uploads`.
 
 ## Auth admin
 
