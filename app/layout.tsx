@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Juliedash",
-  description: "Tableau de bord simple pour praticienne bien-etre"
+  title: "Template Next",
+  description: "Socle Next.js reutilisable avec espace d'administration"
 };
 
 export default function RootLayout({

@@ -1,8 +1,8 @@
-# Juliedash
+# Template Next
 
-Socle minimal Next.js pour Juliedash, une future application de gestion simple pour praticienne bien-etre.
+Socle generique Next.js reutilisable pour demarrer une application auto-hebergee avec un espace d'administration simple.
 
-Ce jalon contient seulement :
+Ce socle contient :
 
 - une page publique `/`
 - une page admin protegee `/admin`
@@ -10,6 +10,7 @@ Ce jalon contient seulement :
 - une auth admin simple par cookie httpOnly signe
 - Prisma avec PostgreSQL
 - Docker et Docker Compose avec bind mounts explicites
+- un emplacement persistant pour les futurs uploads
 
 ## Variables d'environnement
 
@@ -27,7 +28,7 @@ Variables principales :
 - `POSTGRES_DB` : base PostgreSQL
 - `ADMIN_PASSWORD_HASH` : hash bcrypt du mot de passe admin
 - `SESSION_SECRET` : secret long et aleatoire pour signer le cookie de session
-- `UPLOAD_DIR` : dossier des futurs fichiers uploades, par defaut `/data/uploads` dans Docker
+- `UPLOAD_DIR` : dossier des fichiers uploades, par defaut `/data/uploads` dans Docker
 
 Generer le hash bcrypt du mot de passe admin :
 
@@ -143,7 +144,7 @@ Les donnees persistantes sont stockees dans des dossiers explicites du projet :
 
 `./data/postgres` contient les donnees PostgreSQL.
 
-`./data/uploads` est prevu pour les futurs fichiers stockes par l'application.
+`./data/uploads` est l'emplacement persistant prevu pour les fichiers stockes par l'application. Le socle ne fournit pas encore de route d'upload.
 
 Le dossier `./data/` est ignore par Git et ne doit pas etre commite. Cette approche evite les volumes Docker anonymes ou nommes caches.
 
@@ -152,7 +153,7 @@ Le dossier `./data/` est ignore par Git et ne doit pas etre commite. Cette appro
 Structure cible :
 
 ```text
-/opt/apps/juliedash/
+/opt/apps/template-next/
 ├── docker-compose.yml
 ├── .env
 ├── data/

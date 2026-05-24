@@ -4,9 +4,9 @@ export default function HomePage() {
   return (
     <main className="flex min-h-screen items-center justify-center px-5 py-12">
       <section className="w-full max-w-md">
-        <h1 className="text-4xl font-semibold tracking-normal text-stone-950">Juliedash</h1>
+        <h1 className="text-4xl font-semibold tracking-normal text-stone-950">Template Next</h1>
         <p className="mt-4 text-lg leading-8 text-stone-700">
-          Tableau de bord simple pour praticienne bien-être
+          Socle Next.js reutilisable avec espace d'administration
         </p>
         <Link
           href="/admin/login"

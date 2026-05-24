@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-const SESSION_COOKIE = "juliedash_session";
+const SESSION_COOKIE = "template_next_session";
 const SESSION_VALUE = "admin";
 
 function getSessionSecret() {

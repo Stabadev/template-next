@@ -11,7 +11,7 @@ export default async function AdminPage() {
       <section className="mx-auto flex w-full max-w-3xl flex-col gap-6">
         <div>
           <p className="text-sm font-medium uppercase tracking-wide text-teal-800">Admin</p>
-          <h1 className="mt-2 text-3xl font-semibold text-stone-950">Bienvenue dans Juliedash</h1>
+          <h1 className="mt-2 text-3xl font-semibold text-stone-950">Bienvenue dans Template Next</h1>
         </div>
 
         <form action="/admin/logout" method="post">
